@@ -1,31 +1,43 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
          xmlns:l="/lib/layout">
-    <l:layout css="/plugin/eraser/css/style.css">
+    <l:layout>
         <st:include it="${it.project}" page="sidepanel.jelly"/>
         <l:main-panel>
-            <h1 class="bhead">Erase History</h1>
+              <h1 class="bhead">Erase History</h1>
 
-            <table id="projectstatus" class="sortable pane bigtable">
-              <thead>
-                <tr>
-                  <th>Build number</th>
-                  <th>Age</th>
-                  <th>Duration</th>
-                </tr>
-              </thead>
-              <tbody>
-                <j:forEach var="build" items="${it.builds}">
-                    <tr>
-                        <td>
-                            <input type="checkbox" name="" id="${build.number}" checked="checked"/>
-                            <label for="${build.number}">${build.displayName}</label>
-                        </td>
-                        <td>${build.timestampString}</td>
-                        <td><a href="${app.rootUrl}${build.url}">${build.durationString}</a></td>
-                    </tr>
-                </j:forEach>
-              </tbody>
-            </table>
+              <j:if test="${!empty(it.builds)}">
+                <form method="post" action="doDeleteChosenBuilds">
+
+                    <table id="projectstatus" class="sortable pane bigtable">
+                      <thead>
+                        <tr>
+                          <th>Build number</th>
+                          <th>Age</th>
+                          <th>Duration</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <j:forEach var="build" items="${it.builds}">
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="builds" value="${build.number}" id="${build.number}" checked="checked"/>
+                                    <label for="${build.number}">${build.displayName}</label>
+                                </td>
+                                <td>${build.timestampString}</td>
+                                <td><a href="${app.rootUrl}${build.url}">${build.durationString}</a></td>
+                            </tr>
+                        </j:forEach>
+                      </tbody>
+                    </table>
+                    <p>
+                      <input type="submit" value="${%Delete}"/>
+                    </p>
+                  </form>
+              </j:if>
+
+              <j:if test="${empty(it.builds)}">
+                <p>The job don't have any build.</p>
+              </j:if>
 
         </l:main-panel>
     </l:layout>

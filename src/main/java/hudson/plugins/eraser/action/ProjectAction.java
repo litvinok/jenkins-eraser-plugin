@@ -1,12 +1,10 @@
 package hudson.plugins.eraser.action;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Run;
-import org.apache.commons.lang.StringUtils;
+import hudson.security.Permission;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -18,6 +16,10 @@ public final class ProjectAction implements Action {
     public final AbstractProject<?, ?> project;
     private String fieldsToVisualize;
 
+    /**
+     * @param project
+     * @param fieldsToVisualize
+     */
     public ProjectAction(AbstractProject project, String fieldsToVisualize) {
         this.project = project;
         this.fieldsToVisualize = fieldsToVisualize;
@@ -32,6 +34,7 @@ public final class ProjectAction implements Action {
     }
 
     public String getIconFileName() {
+        //project.checkPermission(Permission.DELETE);
         return "/plugin/eraser/img/icon.png";
     }
 
@@ -39,40 +42,51 @@ public final class ProjectAction implements Action {
         return "eraser";
     }
 
-    //index.jelly
-    public Collection<AbstractBuild> getBuilds() {
+    /**
+     * index.jelly
+     *
+     * @return
+     * @throws NullPointerException
+     */
+    public Collection<AbstractBuild> getBuilds() throws NullPointerException {
+
         ArrayList<AbstractBuild> list = new ArrayList<AbstractBuild>();
 
         for (Object o : getProject().getBuilds()) {
             AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) o;
-
             list.add(build);
-            /*BuildAction action = build.getAction(BuildAction.class);
-            if (action != null && action.getReports() != null) {
-                set.addAll(action.getReports());
-            }    */
         }
+
         return list;
     }
 
-    public void doDeleteBuild(StaplerRequest request, StaplerResponse response) throws IOException {
+    /**
+     * POST form request
+     *
+     * @param request
+     * @param response
+     * @throws IOException
+     * @throws NullPointerException
+     */
+    public void doDoDeleteChosenBuilds(StaplerRequest request, StaplerResponse response) throws IOException, NullPointerException {
 
-        int number = Integer.parseInt(request.getParameter("number"));
-        if (number <= 0) return;
+        project.checkPermission(Permission.DELETE);
 
-        Map<String, Object> r = new HashMap<String, Object>();
-        Run build = getProject().getBuildByNumber(number);
+        Map<Integer, Object> chosen = new HashMap<Integer, Object>();
 
-        try {
-            build.delete();
-            r.put("ok", true);
-        } catch ( Exception e ) {
-            r.put("error", e.getMessage());
+        for (String number : request.getParameterValues("builds") ) {
+            chosen.put( Integer.parseInt(number), true );
         }
 
-        Gson gson = new GsonBuilder().create();
-        response.setContentType("application/json");
-        response.getWriter().write(gson.toJson(r));
+        for (Object o : getProject().getBuilds()) {
+            AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) o;
+            if (chosen.get(build.getNumber()) != null ) {
+                build.delete();
+            }
+        }
+
+        response.sendRedirect2(request.getContextPath());
+        return;
     }
 
 
