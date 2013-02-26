@@ -13,6 +13,9 @@ import java.util.*;
 
 public class EraserAction implements Action {
 
+    /**
+     * Current project variable
+     */
     final private AbstractProject<?, ?> project;
 
     /**
@@ -22,28 +25,48 @@ public class EraserAction implements Action {
         this.project = project;
     }
 
+    /**
+     * Current project
+     * @return
+     */
     public AbstractProject<?, ?> getProject() {
         return project;
     }
 
+    /**
+     * Name of plugin for side panel
+     * @return
+     */
     public String getDisplayName() {
         return "Erase History";
     }
 
+    /**
+     * Icon of plugin for side panel
+     * @return
+     */
     public String getIconFileName() {
-        return "/plugin/eraser/img/icon.png";
+        return hasPermission() ? "/plugin/eraser/img/icon.png" : null;
     }
 
+    /**
+     * URL of plugin for side panel
+     * @return
+     */
     public String getUrlName() {
         return "eraser";
     }
 
+    /**
+     * Check permission for delete
+     * @return
+     */
     private boolean hasPermission(){
         return Hudson.getInstance().hasPermission(project.DELETE);
     }
 
     /**
-     * index.jelly
+     * Provide list of builds for index.jelly
      *
      * @return
      * @throws NullPointerException
@@ -61,7 +84,7 @@ public class EraserAction implements Action {
     }
 
     /**
-     * POST form request
+     * Delete chosen builds and redirect to back
      *
      * @param request
      * @param response
@@ -70,16 +93,19 @@ public class EraserAction implements Action {
      */
     public void doDoDeleteChosenBuilds(StaplerRequest request, StaplerResponse response) throws IOException, NullPointerException {
 
-        Map<Integer, Object> chosen = new HashMap<Integer, Object>();
+        if ( hasPermission() ){
 
-        for (String number : request.getParameterValues("builds") ) {
-            chosen.put( Integer.parseInt(number), true );
-        }
+            Map<Integer, Object> chosen = new HashMap<Integer, Object>();
 
-        for (Object o : getProject().getBuilds()) {
-            AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) o;
-            if (chosen.get(build.getNumber()) != null ) {
-                build.delete();
+            for (String number : request.getParameterValues("builds") ) {
+                chosen.put( Integer.parseInt(number), true );
+            }
+
+            for (Object o : getProject().getBuilds()) {
+                AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) o;
+                if (chosen.get(build.getNumber()) != null ) {
+                    build.delete();
+                }
             }
         }
 
