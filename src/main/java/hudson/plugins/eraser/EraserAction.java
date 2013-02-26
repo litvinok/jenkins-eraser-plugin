@@ -1,28 +1,25 @@
-package hudson.plugins.eraser.action;
+package hudson.plugins.eraser;
 
+import hudson.model.Hudson;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Run;
-import hudson.security.Permission;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 import java.io.IOException;
 import java.util.*;
 
-public final class ProjectAction implements Action {
+public class EraserAction implements Action {
 
-    public final AbstractProject<?, ?> project;
-    private String fieldsToVisualize;
+    final private AbstractProject<?, ?> project;
 
     /**
      * @param project
-     * @param fieldsToVisualize
      */
-    public ProjectAction(AbstractProject project, String fieldsToVisualize) {
+    public EraserAction(AbstractProject project) {
         this.project = project;
-        this.fieldsToVisualize = fieldsToVisualize;
     }
 
     public AbstractProject<?, ?> getProject() {
@@ -34,12 +31,15 @@ public final class ProjectAction implements Action {
     }
 
     public String getIconFileName() {
-        //project.checkPermission(Permission.DELETE);
         return "/plugin/eraser/img/icon.png";
     }
 
     public String getUrlName() {
         return "eraser";
+    }
+
+    private boolean hasPermission(){
+        return Hudson.getInstance().hasPermission(project.DELETE);
     }
 
     /**
@@ -69,8 +69,6 @@ public final class ProjectAction implements Action {
      * @throws NullPointerException
      */
     public void doDoDeleteChosenBuilds(StaplerRequest request, StaplerResponse response) throws IOException, NullPointerException {
-
-        project.checkPermission(Permission.DELETE);
 
         Map<Integer, Object> chosen = new HashMap<Integer, Object>();
 
